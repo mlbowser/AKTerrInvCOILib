@@ -1,5 +1,5 @@
 # AKTerrInvCOILib
-This is a COI DNA barcode library for use in metagenomic analyses in the vicinity of Alaska.
+This is a COI DNA barcode library for use in metagenomic analyses of terrestrial arthropods in the vicinity of Alaska.
 
 Publicly available DNA barcode sequences and corresponding specimen data of arthropods from Alaska, Yukon Territory, British Columbia, and Russa were downloaded from BOLD (http://www.boldsystems.org/) on March 15, 2019, yielding 415,779 records.  Search strings and numbers of records obtained are included below.
 
