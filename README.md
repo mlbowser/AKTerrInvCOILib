@@ -10,3 +10,17 @@ Search String                             Records
 "Arthropoda"[tax] "Yukon Territory"[geo]   77,510
 
 The library was first dereplicated using VSEARCH.  From among each set of replicate sequences, we used an R script to select records having the most useful specimen data.  First, if any of a set of replicate sequences had species-resolution identifications, these were selected.  If none had species-reloution identifications, then the record(s) having the most complete taxonomy were selected.  Next, if some records had BOLD BIN assignments while others did not, those having BIN assignments were chosen.  Records from Alaska were chosen over records from other regions.  Finally, if more than one record met all of these criteria, one record was randomly chosen using the sample function of R.  Finally, the dereplicated sequences were clustered using VSEARCH with options "--cluster_fast with options --iddef 0 --id 0.99", yielding a reference library of 140,244 sequences.
+
+Files:
+
+2019-03-25-0832_clusters.fas.gz
+Representative clusters with BOLD processids as identifiers in compressed FASTA format.  
+
+2019-03-25-0832_clusters.qza
+Representative clusters with BOLD processids as identifiers as a QIIME 2 artifact.
+
+2019-03-25-0828_tax.txt
+Taxonomy of representative clusters in HeaderlessTSVTaxonomyFormat as a text file.
+
+2019-03-25-0828_tax.qza
+Taxonomy of representative clusters as a QIIME 2 artifact.
