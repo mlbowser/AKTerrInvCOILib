@@ -18,13 +18,17 @@ The library was first dereplicated using VSEARCH.  From among each set of repli
 Files:
 
 2019-03-25-0832_clusters.fas.gz
+
 Representative clusters with BOLD processids as identifiers in compressed FASTA format.  
 
 2019-03-25-0832_clusters.qza
+
 Representative clusters with BOLD processids as identifiers as a QIIME 2 artifact.
 
 2019-03-25-0828_tax.txt
+
 Taxonomy of representative clusters in HeaderlessTSVTaxonomyFormat as a text file.
 
 2019-03-25-0828_tax.qza
+
 Taxonomy of representative clusters as a QIIME 2 artifact.
