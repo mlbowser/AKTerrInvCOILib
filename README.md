@@ -19,16 +19,20 @@ Files:
 
 2019-03-25-0832_clusters.fas.gz
 
-Representative clusters with BOLD processids as identifiers in compressed FASTA format.  
+Representative sequences with BOLD processids as identifiers in compressed FASTA format.  
 
 2019-03-25-0832_clusters.qza
 
-Representative clusters with BOLD processids as identifiers as a QIIME 2 artifact.
+Representative sequences with BOLD processids as identifiers as a QIIME 2 artifact.
 
 2019-03-25-0828_tax.txt
 
-Taxonomy of representative clusters in HeaderlessTSVTaxonomyFormat as a text file.
+Taxonomy of representative sequences in HeaderlessTSVTaxonomyFormat as a text file.
 
 2019-03-25-0828_tax.qza
 
-Taxonomy of representative clusters as a QIIME 2 artifact.
+Taxonomy of representative sequences as a QIIME 2 artifact.
+
+2019-04-19-1122_specimen_data.txt.gz
+
+Specimen data of represenative sequences in BOLD's txt export format.
