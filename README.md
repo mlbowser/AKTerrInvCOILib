@@ -33,3 +33,5 @@ Taxonomy of representative sequences as a QIIME 2 artifact.
 **2019-04-19-1122_specimen_data.txt.gz**
 
 Specimen data of represenative sequences in BOLD's txt export format.
+
+The **scripts** folder contains scripts and commands used to create the library.  These are messy, showing the actual workflow.
