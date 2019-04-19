@@ -1,0 +1,392 @@
+## Picking up where I left off on Monday on Yeti in R.
+save.image("2019-03-20-0810_workspace.RData")
+
+dim(rdf)
+[1] 140093      2
+
+require(Biostrings)
+
+fas1 <- readDNAStringSet("2019-03-15-1426_lib.fas")
+
+labs <- labels(fas1)[labels(fas1) %in% rdf$rep]
+length(labs)
+[1] 140333  ## so there must be duplicate matches for this number to be greater?
+
+length(unique(labs))
+[1] 140075  ## hmm.  This makes me a little uncomfortable.
+
+fsd <- as.data.frame(cbind(labels(fas1), as.character(fas1)), col.names=c("lab", "seq"))
+dim(fsd)
+[1] 391167      2
+
+## Those names didn't take.
+names(fsd) <- c("lab", "seq")
+
+fsd2 <- fsd[fsd$lab %in% rdf$rep,]
+dim(fsd2)
+[1] 140333      2
+
+fsd2 <- unique(fsd2)
+dim(fsd2)
+[1] 140333      2
+## Are there multiple sequences for some processids?
+
+summary(fsd2[duplicated(fsd2$lab),])
+ summary(fsd2[duplicated(fsd2$lab),])
+           lab
+ GBMTG1989-16: 10
+ ZSMDB107-16 : 10
+ TANYT001-14 :  8
+ TANYT002-14 :  8
+ TANYT230-15 :  5
+ ZSMDB105-16 :  5
+ (Other)     :212
+
+fsd2[fsd2$lab=="GBMTG1989-16",] 
+
+## Wow, I checked out this one and there really are a number of sequences of different genes on BOLD for this single specimen.
+
+http://boldsystems.org/index.php/Public_RecordView?processid=GBMTG1989-16
+
+## I will now need to start over to filter out those non COI-5P sequences.
+
+fas1 <- readDNAStringSet("2019-03-15-1152_lib.fas")
+
+label <- names(fas1)
+nm <- as.data.frame(label)
+
+require(reshape)
+
+nm2 <- colsplit(nm$label, split="\\|", names=c("processid", "identification", "marker", "id2"))
+head(nm2)
+
+levels(nm2$marker)
+ [1] "12S"       "16S"       "18S"       "18S-V4"    "28S"       "28S-D2"
+ [7] "28S-D2-D3" "AATS"      "ARK"       "CAD"       "CAD4"      "COI-3P"
+[13] "COI-5P"    "COII"      "COXIII"    "CYTB"      "EF1-alpha" "ENO"
+[19] "H3"        "H4"        "ITS2"      "ND1"       "ND2"       "ND3"
+[25] "ND4"       "ND4L"      "ND5-0"     "ND6"       "PGD"       "TPI"
+[31] "Wnt1"
+
+## Selecting only COI-5P.
+fas2 <- fas1[nm2$marker == "COI-5P"]
+nm2 <- nm2[nm2$marker == "COI-5P",]
+length(fas2)
+[1] 390414
+
+names(fas2) <- nm2$processid
+
+## Doing a substitution.
+fas2[1:length(fas2)] <- gsub("-", "N", as.character(fas2))
+
+## Saving that.
+writeXStringSet(fas2, "2019-03-20-1009_lib.fas")
+
+## Leaving R.
+q()
+
+sed -n '1,100p' 2019-03-20-1009_lib.fas
+## That looked good except that it was multiline.  We will see if that works.
+
+module purge
+
+module load genetics/vsearch-2.4.3 
+ 
+vsearch --cluster_fast 2019-03-20-1009_lib.fas \
+ --centroids 2019-03-20-1014_clusters.fas \
+ --uc 2019-03-20-1014_uc_out.txt \
+ --id 0.99\
+ --iddef 0 
+vsearch v2.4.3_linux_x86_64, 125.9GB RAM, 20 cores
+https://github.com/torognes/vsearch
+
+Reading file 2019-03-20-1009_lib.fas 100%
+251143700 nt in 390414 seqs, min 63, max 1951, avg 643
+Masking 100%
+Sorting by length 100%
+Counting unique k-mers 100%
+Clustering 100%
+Sorting clusters 100%
+Writing clusters 100%
+Clusters: 140091 Size min 1, max 599, avg 2.8
+Singletons: 91146, 23.3% of seqs, 65.1% of clusters
+ 
+module purge
+
+module load R/3.5.1-gcc7.1.0
+
+R
+
+## Forgot to check whether or not there are still duplicates.
+require(Biostrings)
+
+fas1 <- readDNAStringSet("2019-03-20-1014_clusters.fas")
+length(unique(names(fas1)))
+[1] 140091 ## Yeah!!!
+
+de1 <- read.delim("2019-03-20-1014_uc_out.txt", header=FALSE)
+dim(de1)
+[1] 530505     10
+
+de2 <- de1[, 9:10]
+names(de2) <- c("Query", "Target")
+sl <- grepl("\\*", de2$Target)
+de2$Query <- as.character(de2$Query)
+de2$Target <- as.character(de2$Target)
+de2$Target[sl] <- de2$Query[sl]
+de2 <- unique(de2)
+dim(de2)
+[1] 390414      2
+
+ak <- read.delim("Alaska.txt", quote="", stringsAsFactors = FALSE)
+bc <- read.delim("British_Columbia.txt", quote="", stringsAsFactors = FALSE)
+yk <- read.delim("Yukon_Territory.txt", quote="", stringsAsFactors = FALSE)
+ru <- read.delim("Russia.txt", quote="", stringsAsFactors = FALSE)
+
+d1 <- rbind(ak, bc, yk, ru)
+dim(d1)
+[1] 415779     68
+
+tg <- levels(as.factor(de2$Target))
+length(tg)
+[1] 140091 ## Looks good.
+
+## Now for each target I want to select one of the records with the most complete data.
+
+## First make a dataframe to put results in.
+Target <- tg
+rdf <- as.data.frame(tg)
+rdf$rep <- NA ## for selected representative sequence records.
+
+this_tg <- 1 ## for testing.
+for (this_tg in 1:length(tg)) # length(tg)
+ {
+ 
+ ## First make dataframe of records with matching sequences.
+ ttg <- tg[this_tg]
+ qr <- de2$Query[which(de2$Target == ttg)] 
+ sl <- which(d1$processid %in% qr)
+ qdf <- d1[sl,]
+ qdf$lt <- paste(qdf$class_name, qdf$order_name, qdf$family_name, qdf$species_name)
+ 
+ ## If there are any species identifications, choose these.
+ if (sum(is.na(qdf$species_name)) > 0)
+  {
+  sl <- !(is.na(qdf$species_name))
+  qdf <- qdf[sl,]
+  } 
+ 
+ ## If there are no species IDs just pick the longest taxonomy.
+ if (sum(!is.na(qdf$species_name)) == 0) 
+  {
+  mxlt <- max(nchar(qdf$lt))
+  sl <- nchar(qdf$lt) == mxlt
+  qdf <- qdf[sl,]
+  }
+ 
+ ## If some have BINs and some don't, choose the ones with BINS.
+ if (sum(is.na(qdf$bin_uri)) > 0)
+  {
+  sl <- !(is.na(qdf$bin_uri))
+  qdf <- qdf[sl,]
+  }
+  
+ ## Now if some records are from Alaska, choose these.
+  if (sum(qdf$province_state %in% "Alaska") > 0)
+  {
+  sl <- qdf$province_state %in% "Alaska"
+  qdf <- qdf[sl,]
+  }
+ 
+ ## Now just make a random choice.
+ sl <- sample(qdf$processid, size=1)
+ 
+ ## Now populate that dataframe.
+ rdf$rep[this_tg] <- sl
+ 
+ }
+
+write.csv(rdf, "2019-03-20-1031_selected_records.csv", row.names=FALSE)
+save.image("2019-03-20-1031_workspace.RData")
+
+dim(rdf)
+[1] 140091      2
+
+head(rdf)
+           tg           rep
+1 ABKWR002-07   DKNWR093-11
+2 ABKWR003-07 DRYAS21339-15
+3 ABKWR005-07    UAMU758-14
+4 ABKWR006-07  UAMIC1050-13
+5 ABKWR007-07    UAMU343-14
+6 ABKWR008-07   ABKWR008-07
+## Something is wrong here.
+ABKWR002-07 and DKNWR093-11 are in completely different groups.
+
+## Where was the problem?
+head(de2)
+          Query        Target
+1 DRYAS16715-15 DRYAS16715-15
+2  GMRSA3978-14  GMRSA3978-14
+3   CERPA342-08   CERPA342-08
+4   BEECE684-10   BEECE684-10
+5   BENTH337-08   BENTH337-08
+6   BENTH361-08   BENTH361-08
+tail(de2)
+             Query       Target
+390409 RDNMC355-05  RDNMC355-05
+390410 UAMIC016-12  UAMIC016-12
+390411 BBLPD189-10  BBLPD189-10
+390412 BUICD124-15  CERPA385-08
+390413 SPIAL243-10 GMODL1184-15
+390414  LBCG504-08   LBCG504-08
+## Something is wrong there. SPIAL243-10 GMODL1184-15 are different things.  The problem may have been with the FASTA file that I made.  Perhaps the labels and sequences are mixed up.
+
+as.character(fas1[names(fas1)=="GMODL1184-15"])
+ GMODL1184-15
+"NNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNCTTTTAGAATATTAATTCGAACAGAACTAGGAATACCTGGATCATTAATTAATGATAATAGTCAAATTTATAACGTAATTGTAACTTCACATGCATTCTTAATAATTTTTTTCATAGTAATACCTGTTATAATTGGAGGATTTGGTAATTGATTAGTACCATTAATATTAGGAGCCCCTGATATAGCTTTTCCACGATTAAATAATATAAGATTTTGATTTCTACCCCCATCAATTACACTTTTATTATCAAGAAGTTTAGTAAATGCAGGGTCAGGAACAGGATGAACAGTTTATCCACCTTTATCAGGAAGAGTTTCTCATACAGGAGCATCTGTTGATTTAACTATTTTTTCTTTACATCTAGCAGGAATTTCATCAATTTTAGGAGCTATTAATTTCATCTCAACAATAATTAATATACGTGTAAAAGGAATAACATTTGAACGAATACCCCTATTTATTTGAGCAGTATCTCTAACAGCTTTATTATTACTTTTATCATTACCTGTATTAGCTGGTGCAATTACAATATTATTAACAGATCGAAATTTAAATACATCATTTTTTGATCCATCAGGTGGAGGAGATCCAATTCTTTATCAACATTTATTT"
+
+That sequence is from Monsoma pulveratum.
+The label is Charipinae.  Yes, these are mixed up in the FASTA file.
+
+## Starting over.
+fas1 <- readDNAStringSet("2019-03-15-1152_lib.fas")
+
+label <- names(fas1)
+nm <- as.data.frame(label)
+
+require(reshape)
+
+nm2 <- colsplit(nm$label, split="\\|", names=c("processid", "identification", "marker", "id2"))
+
+## Selecting only COI-5P.
+fas2 <- fas1[nm2$marker == "COI-5P"]
+nm2 <- nm2[nm2$marker == "COI-5P",]
+length(fas2)
+
+names(fas2) <- nm2$processid[nm2$marker == "COI-5P"] ## This was the problematic line. Fixed now, I think.
+
+## Doing a substitution.
+fas2[1:length(fas2)] <- gsub("-", "N", as.character(fas2))
+
+## Saving that.
+writeXStringSet(fas2, "2019-03-20-1316_lib.fas")
+
+## Some random quality checks, checking against BOLD.
+as.character(fas2[sample(1:length(fas2), size=3)])
+## Those all checked out.
+
+q()
+
+module purge
+
+module load genetics/vsearch-2.4.3 
+ 
+vsearch --cluster_fast 2019-03-20-1316_lib.fas \
+ --centroids 2019-03-20-1334_clusters.fas \
+ --uc 2019-03-20-1334_uc_out.txt \
+ --id 0.99\
+ --iddef 0 
+vsearch v2.4.3_linux_x86_64, 125.9GB RAM, 20 cores
+https://github.com/torognes/vsearch
+
+Reading file 2019-03-20-1316_lib.fas 100%
+250958050 nt in 390414 seqs, min 63, max 1551, avg 643
+Masking 100%
+Sorting by length 100%
+Counting unique k-mers 100%
+Clustering 100%
+Sorting clusters 100%
+Writing clusters 100%
+Clusters: 139973 Size min 1, max 629, avg 2.8
+Singletons: 91032, 23.3% of seqs, 65.0% of clusters
+
+module purge
+
+module load R/3.5.1-gcc7.1.0
+
+R  
+ 
+de1 <- read.delim("2019-03-20-1334_uc_out.txt", header=FALSE)
+dim(de1)
+
+de2 <- de1[, 9:10]
+names(de2) <- c("Query", "Target")
+sl <- grepl("\\*", de2$Target)
+de2$Query <- as.character(de2$Query)
+de2$Target <- as.character(de2$Target)
+de2$Target[sl] <- de2$Query[sl]
+de2 <- unique(de2)
+dim(de2)
+
+ak <- read.delim("Alaska.txt", quote="", stringsAsFactors = FALSE)
+bc <- read.delim("British_Columbia.txt", quote="", stringsAsFactors = FALSE)
+yk <- read.delim("Yukon_Territory.txt", quote="", stringsAsFactors = FALSE)
+ru <- read.delim("Russia.txt", quote="", stringsAsFactors = FALSE)
+
+d1 <- rbind(ak, bc, yk, ru)
+dim(d1)
+
+tg <- levels(as.factor(de2$Target))
+length(tg)
+
+## Now for each target I want to select one of the records with the most complete data.
+
+## First make a dataframe to put results in.
+Target <- tg
+rdf <- as.data.frame(tg)
+rdf$rep <- NA ## for selected representative sequence records.
+
+this_tg <- 1 ## for testing.
+for (this_tg in 1:length(tg)) # length(tg)
+ {
+ 
+ ## First make dataframe of records with matching sequences.
+ ttg <- tg[this_tg]
+ qr <- de2$Query[which(de2$Target == ttg)] 
+ sl <- which(d1$processid %in% qr)
+ qdf <- d1[sl,]
+ qdf$lt <- paste(qdf$class_name, qdf$order_name, qdf$family_name, qdf$species_name)
+ 
+ ## If there are any species identifications, choose these.
+ if (sum(is.na(qdf$species_name)) > 0)
+  {
+  sl <- !(is.na(qdf$species_name))
+  qdf <- qdf[sl,]
+  } 
+ 
+ ## If there are no species IDs just pick the longest taxonomy.
+ if (sum(!is.na(qdf$species_name)) == 0) 
+  {
+  mxlt <- max(nchar(qdf$lt))
+  sl <- nchar(qdf$lt) == mxlt
+  qdf <- qdf[sl,]
+  }
+ 
+ ## If some have BINs and some don't, choose the ones with BINS.
+ if (sum(is.na(qdf$bin_uri)) > 0)
+  {
+  sl <- !(is.na(qdf$bin_uri))
+  qdf <- qdf[sl,]
+  }
+  
+ ## Now if some records are from Alaska, choose these.
+  if (sum(qdf$province_state %in% "Alaska") > 0)
+  {
+  sl <- qdf$province_state %in% "Alaska"
+  qdf <- qdf[sl,]
+  }
+ 
+ ## Now just make a random choice.
+ sl <- sample(qdf$processid, size=1)
+ 
+ ## Now populate that dataframe.
+ rdf$rep[this_tg] <- sl
+ 
+ } ## This loop takes forever. How could I make it faster?
+
+write.csv(rdf, "2019-03-20-1337_selected_records.csv", row.names=FALSE)
+save.image("2019-03-20-1337_workspace.RData") 
+
+
+ 

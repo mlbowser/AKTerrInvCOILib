@@ -1,0 +1,44 @@
+cd /home/mattbowser/AK_arhropod_COI_library
+
+sbatch 2019-03-26-1437_train_classifier.slurm
+
+## That ran fast!
+
+## Now trying it out.
+
+cd /home/mattbowser/2017_STDP
+
+module load python/anaconda3
+
+source activate qiime2-2019.1
+
+qiime feature-classifier classify-sklearn \
+  --i-classifier /home/mattbowser/AK_arhropod_COI_library/2019-03-26-1438_classifier.qza \
+  --i-reads rep-seqs.qza \
+  --o-classification 2019-03-26-1448_taxonomy.qza
+
+qiime metadata tabulate \
+  --m-input-file 2019-03-26-1448_taxonomy.qza \
+  --o-visualization 2019-03-26-1448_taxonomy.qzv
+
+## I looked at that.  These results were quite different than the blast and vsearch results I looked at previously.  Everything was identified as in insect, but there were no species resolution IDs.
+
+## Running identifications via vsearch using the most recent library.
+
+qiime feature-classifier classify-consensus-vsearch \
+--i-query rep-seqs.qza \
+--i-reference-taxonomy /home/mattbowser/AK_arhropod_COI_library/2019-03-25-0828_tax.qza \
+--i-reference-reads /home/mattbowser/AK_arhropod_COI_library/2019-03-25-0832_clusters.qza \
+--o-classification 2019-03-26-1457_taxonomy.qza \
+--p-perc-identity 0.90 \
+--p-maxaccepts 1
+
+## That is taking a long time.  I should have submitted this via SLURM.
+
+## Canceled that after about an hour and submitted via SLURM.
+
+sbatch 2019-03-26-1602_classify.slurm
+
+
+
+

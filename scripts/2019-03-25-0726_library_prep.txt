@@ -1,0 +1,152 @@
+cd /home/mattbowser/AK_arhropod_COI_library
+
+module load R/3.5.1-gcc7.1.0
+
+R
+
+dim(rdf)
+[1] 269517      2
+
+require(Biostrings)
+
+fas1 <- readDNAStringSet("2019-03-22-1544_clusters.fas")
+length(unique(names(fas1)))  ## Should be 140244 clusters reported by vsearch.
+[1] 140244 ## Good!
+
+sum(names(fas1) %in% rdf$tg)
+[1] 140244 ## That is good.  All of those sequences are represented.
+
+## Now to merge data frames to change the fasta processids to match the representative sequences selected.
+fsd <- as.data.frame(names(fas1))
+names(fsd) <- "tg"
+fsd$tg <- as.character(fsd$tg)
+
+rdf$tg <- as.character(rdf$tg)
+
+fsd2 <- merge(fsd, rdf, by="tg", all.x=TRUE, sort=FALSE)
+
+## Checking.
+sum(fsd2$tg == fsd$tg)
+[1] 140244
+
+sum(fsd2$tg == fsd2$rep)
+[1] 133367 ## Good.  This should be less than the total.
+
+sum(is.na(fsd$rep))
+[1] 0 ## Good.
+
+## Now replacing labels with labels from identical reads with generally better metadata.
+names(fas1) <- fsd2$rep
+
+## Saving.
+writeXStringSet(fas1, "2019-03-25-0816_clusters.fas")
+
+## Now we need a dataframe of all the metadata for these records.
+fsd <- as.data.frame(names(fas1))
+names(fsd) <- "processid"
+fsd$processid <- as.character(fsd$processid)
+
+d2 <- merge(fsd, d1, by="processid", all.x=TRUE, sort=FALSE)
+dim(d2)
+[1] 140244     68
+
+## Saving this.
+write.csv(d2, "2019-03-25-0822_specimen_data.csv", row.names=FALSE)
+
+## Ok, now making a QIIME2 taxonomy file.
+d2$spf <- gsub(" ", "_", d2$species_name)
+d2$spf <- gsub("\\.", "", d2$spf)
+
+## any # signs?
+sum(grepl("#", d2$spf))
+[1] 0 ## Nope.
+
+## Any ?'s?
+sum(grepl("\\?", d2$spf))
+[1] 3 ## Yes.
+## d2$spf <- gsub("\\?", "", d2$spf) ## Maybe these will be ok.  I will leave them for now.
+
+## Adding BIN_URIs.
+d2$spf <- paste(d2$spf, gsub("BOLD:", "_BOLD-", d2$bin_uri), sep="")
+
+d2$tax <- paste(
+ "k__Animalia; ",
+ "p__", d2$phylum_name, "; ",
+ "c__", d2$class_name, "; ",
+ "o__", d2$order_name, "; ",
+ "f__", d2$family_name, "; ",
+ "g__", d2$genus_name, "; ",
+ "s__", d2$spf,
+ sep=""
+ )
+
+## Making taxonomy file.
+tf <- as.data.frame(cbind(d2$processid, d2$tax))
+write.table(tf, file = "2019-03-25-0828_tax.txt", sep = "\t", row.names = FALSE, col.names = FALSE, na = "", quote = FALSE)
+
+## Saving here.
+save.image("2019-03-25-0830_workspace.RData")
+
+q()
+
+## Now replacing lowercase sequences with uppercase.
+awk '/^>/ {print($0)}; /^[^>]/ {print(toupper($0))}' 2019-03-25-0816_clusters.fas > 2019-03-25-0832_clusters.fas
+
+
+module purge
+
+module load python/anaconda3
+
+source activate qiime2-2019.1
+
+
+## Now trying import again.
+qiime tools import \
+  --type 'FeatureData[Sequence]' \
+  --input-path 2019-03-25-0832_clusters.fas \
+  --output-path 2019-03-25-0832_clusters.qza
+
+
+qiime tools import \
+  --type 'FeatureData[Taxonomy]' \
+  --input-format HeaderlessTSVTaxonomyFormat \
+  --input-path 2019-03-25-0828_tax.txt \
+  --output-path 2019-03-25-0828_tax.qza
+
+## Trying to extract reads for my primer set using a QIIME2 SLURM script.
+sbatch 2019-03-25-0840_extract-reads.slurm 
+
+## While that is running, I want to see a quick classification.
+## Using example at https://github.com/BikLab/BITMaB2-Tutorials/blob/master/QIIME2-metabarcoding-tutorial-already-demultiplexed-fastqs.md#step-3---assigning-taxonomy
+
+cd /home/mattbowser/2017_STDP
+
+qiime feature-classifier classify-consensus-blast \
+--i-query rep-seqs.qza \
+--i-reference-taxonomy /home/mattbowser/AK_arhropod_COI_library/2019-03-25-0828_tax.qza \
+--i-reference-reads /home/mattbowser/AK_arhropod_COI_library/2019-03-25-0832_clusters.qza \
+--o-classification 2019-03-25-0854_taxonomy.qza \
+--p-perc-identity 0.90 \
+--p-maxaccepts 1
+
+## Trying to look at this.
+qiime metadata tabulate \
+  --m-input-file 2019-03-25-0854_taxonomy.qza \
+  --o-visualization 2019-03-25-0854_taxonomy.qzv
+
+## That result looked quite similar to what I had obtained by vsearch, with confidence always at 1.0.  I do not like that.
+
+## Again trying to follow the example at the URI below.
+## https://docs.qiime2.org/2019.1/tutorials/feature-classifier/
+
+
+## For training the classifier once that SLURM script is done.
+qiime feature-classifier fit-classifier-naive-bayes \
+  --i-reference-reads ref-seqs.qza \
+  --i-reference-taxonomy ref-taxonomy.qza \
+  --o-classifier classifier.qza
+
+  
+  
+
+ 

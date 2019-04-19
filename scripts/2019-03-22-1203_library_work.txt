@@ -1,0 +1,42 @@
+## That SLURM job finished while I took a short walk.
+
+module purge
+
+module load R/3.5.1-gcc7.1.0
+
+cd /home/mattbowser/AK_arhropod_COI_library
+
+R
+
+## Interesting.  My workspace from the SLURM script was restored.
+dim(rdf)
+[1] 140091      2
+## I checked over this and it looked to be exactly like the selected_records.csv file.
+
+sl <- which(d1$processid %in% rdf$rep)
+length(sl)
+[1] 140091
+
+rdf2 <- rdf[order(rdf$rep),]
+
+d2 <- d1[sl,]
+d2 <- d2[order(d2$processid),]
+
+## Checking...
+sum(rdf2$rep == d2$processid)
+[1] 140091  ##That checks out.
+
+require(Biostrings)
+
+fas1 <- readDNAStringSet("2019-03-22-0954_clusters.fas")
+length(unique(names(fas1)))
+[1] 140371 ## Why does this differ from the 140091 for the 
+
+## Oh, I see.  I chose the wrong file in that R script run by SLURM earlier today.
+q()
+
+module purge
+
+## I made new R script and SLURM files.
+sbatch 2019-03-22-1219_choose_dereps.slurm
+

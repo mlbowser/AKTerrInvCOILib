@@ -1,0 +1,178 @@
+## Looking at 	QIIME2 example at the URI below for importing referecee datasets.
+
+https://docs.qiime2.org/2019.1/tutorials/feature-classifier/
+
+Downloading took a long time.
+
+Moved files to Yeti.
+
+## Combining into one big file.
+cat *.fas > 2019-03-15-1152_lib.fas
+
+Now in R.
+
+
+## in R:
+wd <- "C:/Users/mattbowser/Documents/2017_STDP_NGS/work_space/2019-03-15_library_construction"
+dd <- "C:/Users/mattbowser/Documents/2017_STDP_NGS/work_space/2019-03-15_library_construction/BOLD_downloads"
+setwd(dd)
+
+require(Biostrings)
+
+fas1 <- readDNAStringSet("2019-03-15-1152_lib.fas")
+
+label <- names(fas1)
+nm <- as.data.frame(label)
+
+require(reshape)
+
+nm2 <- colsplit(nm$label, split="\\|", names=c("processid", "identification", "marker", "id2"))
+head(nm2)
+## That looked good.
+
+names(fas1) <- nm2$processid
+writeXStringSet(fas1, "2019-03-15-1214_lib.fas")
+
+t1 <- fas1[1:2]
+s1 <- as.character(t1)
+#t1[1] <- "ATAT"
+
+## Doing a substitution.
+fas2 <- fas1
+fas2[1:length(fas2)] <- gsub("-", "N", as.character(fas1))
+
+## Saving that.
+writeXStringSet(fas1, "2019-03-15-1242_lib.fas")
+## Leaving R.
+q("no")
+
+## Now I want the list of identical sequences.
+module load genetics/vsearch-2.4.3
+
+## Looked at http://manpages.org/vsearch
+vsearch --derep_fulllength 2019-03-15-1242_lib.fas --uc 2019-03-15-1400_derep.txt
+
+Fatal error: illegal character '-' on line 19 in fasta file
+
+sed -n '19p' 2019-03-15-1242_lib.fas 
+## Well that is bad. R's writeXStringSet command makes fasta files with multiple lines per sequence.
+
+wc -l 2019-03-15-1152_lib.fas
+782334 2019-03-15-1152_lib.fas
+
+module purge
+
+## in R:
+
+require(Biostrings)
+
+fas1 <- readDNAStringSet("2019-03-15-1152_lib.fas")
+
+label <- names(fas1)
+nm <- as.data.frame(label)
+
+require(reshape)
+
+nm2 <- colsplit(nm$label, split="\\|", names=c("processid", "identification", "marker", "id2"))
+head(nm2)
+## That looked good.
+dim(nm2)
+[1] 391167      4
+
+length(seq)
+seq <- gsub("-", "N", as.character(fas1))
+[1] 391167
+
+length(fas1)
+[1] 391167
+
+fas2 <- rep(as.character(nm2$processid), 2)
+length(fas2)
+[1] 782334
+
+fas2[(1:length(fas1))*2 - 1] <- paste(">", as.character(nm2$processid), sep="")
+fas2[(1:length(fas1))*2] <- seq
+
+write(fas2, "2019-03-15-1426_lib.fas")
+
+## Leaving R.
+q("no")
+
+## Now I want the list of identical sequences.
+module load genetics/vsearch-2.4.3
+
+vsearch --derep_fulllength 2019-03-15-1426_lib.fas --uc 2019-03-15-1439_derep.txt
+vsearch v2.4.3_linux_x86_64, 125.9GB RAM, 20 cores
+https://github.com/torognes/vsearch
+
+Reading file 2019-03-15-1426_lib.fas 100%
+251623261 nt in 391167 seqs, min 63, max 1951, avg 643
+Dereplicating 100%
+Sorting 100%
+269985 unique sequences, avg cluster 1.4, median 1, max 309
+Writing uc file, first part 100%
+Writing uc file, second part 100%
+
+sed -n '101,200p' 2019-03-15-1439_derep.txt
+
+tail 2019-03-15-1439_derep.txt
+
+R
+
+de1 <- read.delim("2019-03-15-1439_derep.txt", header=FALSE)
+dim(de1)
+[1] 661152     10
+
+## Where does that number come from?
+391167 + 269985 ## input sequences + unique sequences.
+[1] 661152
+
+## Looking at that transition.
+de1[391120:391210, ]
+
+## looked at uclust file format
+http://www.drive5.com/uclust/uclust_userguide_1_1_579.html#_Toc257997686
+
+column names:
+Type
+Cluster
+Size
+%Id
+Strand
+Qlo
+Tlo
+Alignment
+Query
+Target
+
+de1[de1$V9 == "LBCH2059-10",]
+       V1 V2  V3 V4 V5 V6 V7 V8          V9 V10
+1       S  0 658  *  *  *  *  * LBCH2059-10   *
+391168  C  0 309  *  *  *  *  * LBCH2059-10   *
+## Why are there two lines for this sequence, both with diferent lengths?
+## On is new seed, the other is new cluster.
+
+## Looking at second sequence.
+de1[de1$V9 == "LBCH1210-10",]
+  V1 V2  V3    V4 V5 V6 V7 V8          V9         V10
+2  H  0 658 100.0  +  0  0  * LBCH1210-10 LBCH2059-10
+## That shows up only once.
+## Ok, I think I can use just the first 391167 lines.
+
+de2 <- de1[1:391167, 9:10]
+names(de2) <- c("Query", "Target")
+sl <- grepl("\\*", de2$Target)
+de2$Query <- as.character(de2$Query)
+de2$Target <- as.character(de2$Target)
+de2$Target[sl] <- de2$Query[sl]
+
+ak <- read.delim("Alaska.txt")
+bc <- read.delim("British_Columbia.txt")
+Warning message:
+In scan(file = file, what = what, sep = sep, quote = quote, dec = dec,  :
+  EOF within quoted string
+
+bc <- read.delim("British_Columbia.txt", quote="")
+## That worked!  Done for now, though.
+
+

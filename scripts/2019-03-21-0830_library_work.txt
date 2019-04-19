@@ -1,0 +1,314 @@
+## Picking up where I left off on Monday on Yeti in R.
+module load R/3.5.1-gcc7.1.0
+
+R   
+
+load("2019-03-20-1337_workspace.RData")
+
+## Today I need to make the taxonomy file as in the example at https://docs.qiime2.org/2019.1/tutorials/feature-classifier/
+
+## I just realized that the way I did it the sequence I included may not actually be the same as the one for which I have identifiers, etc.  I should have made my selections in a derep step, then ...
+## Wait.  Let me check.
+
+## Leaving R.
+q()
+
+
+## Checking some sequences.
+sed -n '1,100p' 2019-03-20-1334_clusters.fas
+>BEECE668-10
+nnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnaaTTGGTTCATCCATAAGATTATTAATTCGTATAGAATNAAGTC
+ATCCTGGTATATGAATNAATAATGATCAAATTTATAATTCATTAGTTACAAGTCATGCAtttttaataattttttttATA
+GTTATACCATTTATAATTGGAGGATTTGGAAATTANTTAATTCCATTAATATTAGGATCACCTGATATAGCTTTTCCACG
+AATAAATAATATTAGATTCTGATTACTTCCTCCATCTCTTTTTATATTTCTTTTAAGAAATTTATTTACTCCAAATGCAG
+GAACAGGATGAACTGTTTATCCTCCTTTATCATCTTATATATTTCATTCATCACCTTCAATTGATATTGCAATCTTTTCT
+TTACATATAACTGGAATTTCTTCAATTATTGGATCTTTAAATTTTATTGTAACTATTATAATAATAAAAAATTTTTCATT
+AAATTATGATCAAATTAACTTATTTTCATGATCAGTTTGTATTACAGTAATATTATTAATTTTATCTTTACCAGTCCTAG
+CAGGAGCAATTACTATATTATTATTTGATCGAAATTTTAATACATCTTTTTTTGATCCAATAGGAGGAGGTGATCCAATC
+CTTTATCAACATTTATTTnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnn
+nnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnn
+nnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnn
+nnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnn
+nnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnn
+nnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnn
+nnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnn
+nnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnn
+nnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnn
+nnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnn
+nnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnn
+nnnnnnnnnnnnnnnnnnnnnnnnnnnnnnn
+>BEECE670-10
+nnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnaTAAGATTATTAATTCGAATAGAACTTAGTC
+ATCCTGGGATATGAATTAATAATGATCAAATTTATAATTCATTAGTTACAAGTCATGCAtttttaataattttttttATA
+GTTATACCTTTTATAATTGGAGGATTTGGAAATTATTTAATTCCTTTAATATTAGGATCACCCGATATAGCTTTCCCTCG
+AATAAATAATATTAGATTTTGATTATTACCACCATCTCTTTTATTATTACTTTTAAGAACATTATTTTCTCCAAATGTAG
+GAACAGGTTGAACTGTATATCCTCCTTTATCATCTTATATATTTCATTCATCTCCATCTGTTGATATTGCAATTTTCTCT
+TTACATATAACTGGAATTTCTTCAATTATTGGATCATTAAATTTTATTGTAACNATCATACTAATAAAAAATTTTTCATT
+AAATTATGATCAAATTAATTTATTTTCTTGATCAGTATGTATTACAGTATTATTATTAATTTTATCATTACCAGTTTTAG
+CAGGAGCAATTACAATACTTCTTTTTGACCGAAATTTTAATACATCATTTTTTGACCCAATAGGAGGTGGAGATCCTATT
+CTTTATCAACANTTATTTnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnn
+nnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnn
+nnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnn
+nnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnn
+nnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnn
+nnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnn
+nnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnn
+nnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnn
+nnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnn
+nnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnn
+nnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnn
+nnnnnnnnnnnnnnnnnnnnnnnnnnnnnnn
+...
+## Those looked good.
+sed -n '10001,10100p' 2019-03-20-1334_clusters.fas
+...
+>NGNAS1179-14
+nnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnTTATTAATTCGAGCTGAATTAG
+GAACTCCAGGATCTTTAATTGGAGATNNNGATCAAATTTATAATACTATTGTCACTGCTCATGCATTTATTATAAttttt
+tttATAGTAATACCAATTATAATTGGAGGATTTGGAAATTGATTAGTCCCTTTAATANNNTTGGGAGCCCCTGATATAGC
+TTTCCCTCGAATAAATAATATAAGATTTTGACTTCTTCCACCTTCTTTAACTTTATTAATTTCAAGAAGTATTGTAGAAA
+ATGGAGCTGGAACTGGATGAACTGTGTACCCCCCACTTTCATCTAATATTGCCCATGGTGGAAGATCTGTTGATTTANNN
+GCTATTTTTTCCCTTCATTTAGCAGGAATTTCTTCAATTTTAGGAGCTATTAATTTTATTACTACTATTATTAATATAAA
+ATTAAATGGAATAATATTTGATCAAATACCTTTATTTGTGTGAGCTGTCGGAATTACAGCTTTATTACTTTTACTATCCC
+TTCCTGTTTTAGCAGGGNNNGCTATTACTATGCTTTTAACAGATnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnn
+nnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnn
+nnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnn
+nnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnn
+>NGNAS1180-14
+nnnnnnnnnnTTTATTTTTGGAATTTGAGCAGGAATAGTTGGTACATCTCTANNNAGTCTTTTAATTCGAGCTGAATTAG
+GTAATCCTGGATCTTTAATTGGAGATNNNGATCAAATTTATAATACTATCGTCACAGCTCATGCCTTTATTATAAttttt
+tttATAGTTATACCTATTATAATTGGAGGATTTGGAAATTGACTAGTCCCCTTAATANNNTTAGGAGCCCCAGATATAGC
+TTTCCCCCGAATAAATAACATAAGATTTTGACTTCTCCCCCCCTCACTTACTCTTTTAATTTCAAGAAGAATTGTAGAAA
+ATGGAGCAGGGACAGGATGAACAGTATACCCCCCACTTTCATCTAATATTGCTCATGGAGGAAGATCTGTAGATTTANNN
+GCTATTTTTTCTCTCCATTTAGCTGGTATTTCTTCAATTTTAGGAGCAATTAATTTTATTACTACTATTATTAATATAAA
+AATTAATGGATTATCTTTTGATCAAATACCATTATTTGTATGAGCAGTAGGAATTACTGCATTATTATTATTACTTTCTC
+TCCCAGTTCTAGCTGGannnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnn
+nnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnn
+nnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnn
+nnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnn
+...
+## Those were good.  So it will just be the taxonomy that I have gathered from the members of the clusters.
+## Or should I just use the taxonomy of the sequences chosen by vsearch clustering?
+## Some of these will be really coarse.  I will use those best taxonomies chosen for the clusters, then manually edit if necessary.
+
+module load R/3.5.1-gcc7.1.0
+
+R   
+
+load("2019-03-20-1337_workspace.RData")
+
+require(sqldf)
+
+d2 <- sqldf('
+select,
+ rdf.tg,
+ d1.*
+from
+ rdf left outer join
+ d1
+on
+ rdf.rep = d1.processid 
+')
+## That crashed R.  There seems to be a problem with the sqldf package.
+## There must be a way to do a similar thing just in R.
+
+## Starting over, this time not using sqldf.
+load("2019-03-20-1337_workspace.RData")
+dim(rdf)
+[1] 139973      2 ## That is good, matches the number of clusters in the clustered fasta file.
+
+sl <- which(d1$processid %in% rdf$rep)
+length(sl)
+[1] 139973
+
+rdf2 <- rdf[order(rdf$rep),]
+
+d2 <- d1[sl,]
+d2 <- d2[order(d2$processid),]
+
+## Checking...
+sum(rdf2$rep == d2$processid)
+[1] 139973 ## Looks good.
+
+
+levels(as.factor(d2$species_name))
+
+## Trying to improve format of species names so that they are not a problem for QIIME2.
+
+## Looking at the format of the QIIME files at https://unite.ut.ee/repository.php as an example.  
+## Species names have underscores instead of spaces.
+d2$spf <- gsub(" ", "_", d2$species_name)
+d2$spf <- gsub("\\.", "", d2$spf)
+
+## any # signs?
+sum(grepl("#", d2$spf))
+[1] 0 ## Nope.
+
+## Any ?'s?
+sum(grepl("\\?", d2$spf))
+[1] 3 ## Yes.
+## d2$spf <- gsub("\\?", "", d2$spf) ## Maybe these will be ok.  I will leave them for now.
+
+## Adding BIN_URIs.
+d2$spf <- paste(d2$spf, gsub("BOLD:", "_BOLD-", d2$bin_uri), sep="")
+
+d2$tax <- paste(
+ "k__Animalia; ",
+ "p__", d2$phylum_name, "; ",
+ "c__", d2$class_name, "; ",
+ "o__", d2$order_name, "; ",
+ "f__", d2$family_name, "; ",
+ "g__", d2$genus_name, "; ",
+ "s__", d2$spf,
+ sep=""
+ )
+
+## Making taxonomy file.
+tf <- as.data.frame(cbind(as.character(rdf2$tg), d2$tax))
+write.table(tf, file = "2019-03-21-1023_tax.txt", sep = "\t", row.names = FALSE, col.names = FALSE, na = "", quote = FALSE)
+
+## Saving here.
+save.image("2019-03-21-1026_workspace.RData")
+
+q()
+
+## Going to try to import this library now.
+module purge
+module load python/miniconda3-gcc6.1.0
+source activate qiime2-2019.1
+
+qiime tools import \
+  --type 'FeatureData[Sequence]' \
+  --input-path 2019-03-20-1334_clusters.fas \
+  --output-path 2019-03-20-1334_clusters.qza
+  
+
+An unexpected error has occurred:
+
+  Invalid characters in sequence: ['a', 'n', 't'].
+  Valid characters: ['M', 'K', 'W', 'D', 'N', 'G', 'A', 'H', 'V', 'T', 'C', '.', 'Y', '-', 'S', 'B', 'R']
+  Note: Use `lowercase` if your sequence contains lowercase characters not in the sequence's alphabet.
+
+See above for debug info.
+
+## Trying to fix this. 
+## The following from https://gist.github.com/l-modolo/3384b250006b59e54157 
+awk '/^>/ {print($0)}; /^[^>]/ {print(toupper($0))}' 2019-03-20-1334_clusters.fas > 2019-03-21-1023_clusters.fas
+
+## Now trying import again.
+qiime tools import \
+  --type 'FeatureData[Sequence]' \
+  --input-path 2019-03-21-1023_clusters.fas \
+  --output-path 2019-03-21-1023_clusters.qza
+Imported 2019-03-21-1023_clusters.fas as DNASequencesDirectoryFormat to 2019-03-21-1023_clusters.qza
+
+qiime tools import \
+  --type 'FeatureData[Taxonomy]' \
+  --input-format HeaderlessTSVTaxonomyFormat \
+  --input-path 2019-03-21-1023_tax.txt \
+  --output-path 2019-03-21-1023_tax.qza
+Imported 2019-03-21-1023_tax.txt as HeaderlessTSVTaxonomyFormat to 2019-03-21-1023_tax.qza
+
+
+Extracting reference reads.  Taking the primers from the Graham_5376M.txt file from RTL.
+qiime feature-classifier extract-reads \
+  --i-sequences 2019-03-21-1023_clusters.qza \
+  --p-f-primer GGWACWGGWTGAACWGTWTAYCCYCC \
+  --p-r-primer TAAACTTCAGGGTGACCAAAAAATCA \
+  --p-trunc-len 400 \
+  --p-min-length 100 \
+  --p-max-length 600 \
+  --o-reads 2019-03-21-1059_ref_seqs.qza
+  
+## That is taking a long time. Aborted after taking lunch and waiting more.
+
+
+## Looking at https://docs.qiime2.org/2018.11/plugins/available/feature-classifier/classify-consensus-vsearch/
+## and https://github.com/BikLab/BITMaB2-Tutorials/blob/master/QIIME2-metabarcoding-tutorial-already-demultiplexed-fastqs.md#step-3---assigning-taxonomy  
+
+cd /home/mattbowser/2017_STDP
+
+qiime feature-classifier classify-consensus-vsearch \
+--i-query rep-seqs.qza \
+--i-reference-taxonomy /home/mattbowser/AK_arhropod_COI_library/2019-03-21-1023_tax.qza \
+--i-reference-reads /home/mattbowser/AK_arhropod_COI_library/2019-03-21-1023_clusters.qza \
+--o-classification taxonomy.qza \
+--p-perc-identity 0.90 \
+--p-maxaccepts 1
+
+## This is also taking forever.  I might need to submit these kinds of things via SLURM.
+
+## That finished up while I was away from the computer for a bit.
+Saved FeatureData[Taxonomy] to: taxonomy.qza 
+
+mv table.qza unfiltered-table.qza
+cp unfiltered-table.qza table.qza 
+
+qiime metadata tabulate \
+  --m-input-file taxonomy.qza \
+  --o-visualization taxonomy.qzv
+Saved Visualization to: taxonomy.qzv
+## That looked ok. Confidence was always 1.0 though, which is suspicious.
+
+
+## How do I get a classic OTU table?
+https://forum.qiime2.org/t/basic-questions-regarding-classic-otu-table-in-qiime2/4189/5
+## Current documentation:
+https://docs.qiime2.org/2019.1/tutorials/exporting/
+
+qiime tools export \
+  --input-path table.qza \
+  --output-path exported-feature-table
+Exported table.qza as BIOMV210DirFmt to directory exported-feature-table
+
+## That made a feature table in biom format, which I do not know how to read.
+
+mkdir extracted-feature-table
+qiime tools extract \
+  --input-path table.qza \
+  --output-path extracted-feature-table  
+## That still made data in the biom format.
+  
+#####Change the first line of biom-taxonomy.tsv (i.e. the header) to this:
+
+#OTUID	
+#taxonomy	
+#confidence
+
+biom add-metadata \
+ -i exported-feature-table/feature-table.biom \
+ -o table-with-taxonomy.biom \
+ --observation-metadata-fp exported-feature-table/taxonomy.tsv \
+ --sc-separated taxonomy
+
+#convert to classic table
+
+biom convert \
+-i table-with-taxonomy.biom \
+-o OTU_Table.txt \
+--to-tsv \
+--header-key taxonomy
+## That worked! Taxonomy was missing, but we have that in another file already.
+
+
+
+
+
+
+
+## For later, maybe...
+
+qiime feature-classifier extract-reads \
+  --i-sequences 2019-03-21-1023_clusters.qza \
+  --p-f-primer GGWACWGGWTGAACWGTWTAYCCYCC \
+  --p-r-primer TAAACTTCAGGGTGACCAAAAAATCA \
+  --p-trunc-len 400 \
+  --p-min-length 100 \
+  --p-max-length 600 \
+  --o-reads 2019-03-21-1059_ref_seqs.qza
+  
+Training the classifier
+qiime feature-classifier fit-classifier-naive-bayes \
+  --i-reference-reads 2019-03-21-1059_ref_seqs.qza \
+  --i-reference-taxonomy 2019-03-21-1023_tax.qza \
+  --o-classifier 2019-03-21-1105_classifier.qza
